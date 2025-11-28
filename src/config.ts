@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
+
 dotenv.config();
+
 export const config = {
     discord: {
         token: process.env.DISCORD_TOKEN || '',

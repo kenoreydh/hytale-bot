@@ -2,10 +2,13 @@ import Parser from 'rss-parser';
 import { config } from './config';
 import * as fs from 'fs';
 import * as path from 'path';
+
 const LAST_TWEET_FILE = path.join(__dirname, '../last_tweets.json');
+
 interface LastTweets {
     [username: string]: string; // username -> lastTweetGuid (or URL)
 }
+
 // Define the shape of the RSS item we expect
 interface CustomItem {
     link: string;
@@ -16,9 +19,11 @@ interface CustomItem {
     guid: string;
     isoDate: string;
 }
+
 export class TwitterMonitor {
     private parser: Parser<CustomItem>;
     private lastTweets: LastTweets = {};
+
     constructor() {
         this.parser = new Parser({
             customFields: {
@@ -33,44 +38,58 @@ export class TwitterMonitor {
         });
         this.loadLastTweets();
     }
+
     private loadLastTweets() {
         if (fs.existsSync(LAST_TWEET_FILE)) {
             this.lastTweets = JSON.parse(fs.readFileSync(LAST_TWEET_FILE, 'utf-8'));
         }
     }
+
     private saveLastTweets() {
         fs.writeFileSync(LAST_TWEET_FILE, JSON.stringify(this.lastTweets, null, 2));
     }
+
     public setLastTweets(tweets: LastTweets) {
         // Merge with existing (file might have some, Discord might have others)
         // Discord history takes precedence as it is the "public truth"
         this.lastTweets = { ...this.lastTweets, ...tweets };
         this.saveLastTweets();
     }
+
     public async checkNewTweets(callback: (tweetText: string, author: string, url: string, imageUrl?: string) => Promise<void>) {
         console.log('Checking for new tweets (RSS-Bridge)...');
+
         for (const username of config.monitoredAccounts) {
             let success = false;
+
             // Try instances until one works
             for (const bridgeUrl of config.twitter.rssBridgeUrls) {
                 if (success) break;
+
                 try {
                     // Construct RSS-Bridge URL for Twitter
                     // Format: /?action=display&bridge=Twitter&context=By+username&u=USERNAME&format=Atom
                     const rssUrl = `${bridgeUrl}/?action=display&bridge=Twitter&context=By+username&u=${username}&format=Atom`;
                     console.log(`Fetching RSS from ${bridgeUrl}...`);
+
                     const feed = await this.parser.parseURL(rssUrl);
+
                     if (!feed.items || feed.items.length === 0) {
                         console.log(`No items found for ${username} on ${bridgeUrl}`);
                         continue; // Try next instance if empty (might be blocked)
                     }
+
                     success = true; // Mark as successful to stop trying other instances
+
                     // RSS feeds usually have the newest item first
                     const items = feed.items as unknown as CustomItem[];
                     const lastSeenId = this.lastTweets[username];
+
                     // Find the index of the last seen tweet
                     const lastSeenIndex = items.findIndex(item => (item.guid || item.link) === lastSeenId);
+
                     let newItems: CustomItem[] = [];
+
                     if (lastSeenIndex === -1) {
                         if (!lastSeenId) {
                             if (items.length > 0) newItems = [items[0]];
@@ -80,9 +99,11 @@ export class TwitterMonitor {
                     } else {
                         newItems = items.slice(0, lastSeenIndex).reverse();
                     }
+
                     for (const newestItem of newItems) {
                         const currentId = newestItem.guid || newestItem.link;
                         console.log(`New tweet from ${username}: ${currentId}`);
+
                         // Force conversion to twitter.com for the embed link
                         let finalUrl = newestItem.link;
                         try {
@@ -90,7 +111,9 @@ export class TwitterMonitor {
                         } catch (e) {
                             console.error('Error parsing URL', e);
                         }
+
                         const cleanText = newestItem.contentSnippet || newestItem.content || '';
+
                         let imageUrl: string | undefined;
                         if (newestItem.content) {
                             const imgMatch = newestItem.content.match(/<img[^>]+src="([^">]+)"/);
@@ -98,15 +121,19 @@ export class TwitterMonitor {
                                 imageUrl = imgMatch[1];
                             }
                         }
+
                         await callback(cleanText, username, finalUrl, imageUrl);
+
                         this.lastTweets[username] = currentId;
                         this.saveLastTweets();
                     }
+
                 } catch (error) {
                     console.error(`Error with bridge ${bridgeUrl}:`, error.message);
                     // Continue to next bridge
                 }
             }
+
             if (!success) {
                 console.error(`Failed to fetch tweets for ${username} from ALL bridges.`);
             }
