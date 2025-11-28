@@ -11,6 +11,7 @@ interface LastTweets {
 
 // Define the shape of the RSS item we expect
 interface CustomItem {
+    title: string;
     link: string;
     pubDate: string;
     author: string;
