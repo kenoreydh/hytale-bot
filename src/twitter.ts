@@ -79,87 +79,11 @@ export class TwitterMonitor {
                         console.log(`No items found for ${username} on ${bridgeUrl}`);
                         continue; // Try next instance if empty (might be blocked)
                     }
-
-                    success = true; // Mark as successful to stop trying other instances
-
-                    // RSS feeds usually have the newest item first
-                    const items = feed.items as unknown as CustomItem[];
-
-                    // VALIDATION: Check if the feed returned an error disguised as an item
-                    if (items.length > 0) {
-                        const firstItem = items[0];
-                        if (firstItem.title === 'Error' ||
-                            (firstItem.content && firstItem.content.includes('Exception')) ||
-                            (firstItem.content && firstItem.content.includes('404 Not Found')) ||
-                            (firstItem.content && firstItem.content.includes('403 Forbidden'))) {
-                            console.log(`Bridge ${bridgeUrl} returned an error item. Skipping.`);
-                            continue; // Try next bridge
-                        }
-                    }
-
-                    const lastSeenId = this.lastTweets[username];
-
-                    // Find the index of the last seen tweet
-                    const lastSeenIndex = items.findIndex(item => (item.guid || item.link) === lastSeenId);
-
-                    let newItems: CustomItem[] = [];
-
-                    if (lastSeenIndex === -1) {
-                        if (!lastSeenId) {
-                            if (items.length > 0) newItems = [items[0]];
-                        } else {
-                            if (items.length > 0) newItems = [items[0]];
-                        }
-                    } else {
-                        newItems = items.slice(0, lastSeenIndex).reverse();
-                    }
-
-                    for (const newestItem of newItems) {
-                        const currentId = newestItem.guid || newestItem.link;
-
-                        // Double check individual item for error
-                        if (newestItem.title === 'Error' || (newestItem.content && newestItem.content.includes('Exception'))) continue;
-
-                        console.log(`New tweet from ${username}: ${currentId}`);
-
-                        // Force conversion to twitter.com for the embed link
-                        let finalUrl = newestItem.link;
-                        try {
-                            // Check if it's a valid tweet URL (must contain /status/)
-                            if (!finalUrl.includes('/status/')) {
-                                console.log(`Invalid tweet URL: ${finalUrl}. Skipping.`);
-                                continue;
-                            }
-                            finalUrl = finalUrl.replace(/^https?:\/\/[^\/]+/, 'https://twitter.com');
-                        } catch (e) {
-                            console.error('Error parsing URL', e);
-                        }
-
-                        const cleanText = newestItem.contentSnippet || newestItem.content || '';
-
-                        let imageUrl: string | undefined;
-                        if (newestItem.content) {
-                            const imgMatch = newestItem.content.match(/<img[^>]+src="([^">]+)"/);
-                            if (imgMatch && imgMatch[1]) {
-                                imageUrl = imgMatch[1];
-                            }
-                        }
-
-                        await callback(cleanText, username, finalUrl, imageUrl);
-
-                        this.lastTweets[username] = currentId;
-                        this.saveLastTweets();
-                    }
-
-                } catch (error: any) {
-                    console.error(`Error with bridge ${bridgeUrl}:`, error.message || error);
-                    // Continue to next bridge
                 }
-            }
 
             if (!success) {
-                console.error(`Failed to fetch tweets for ${username} from ALL bridges.`);
+                    console.error(`Failed to fetch tweets for ${username} from ALL bridges.`);
+                }
             }
         }
     }
-}
