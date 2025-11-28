@@ -128,8 +128,8 @@ export class TwitterMonitor {
                         this.saveLastTweets();
                     }
 
-                } catch (error) {
-                    console.error(`Error with bridge ${bridgeUrl}:`, error.message);
+                } catch (error: any) {
+                    console.error(`Error with bridge ${bridgeUrl}:`, error.message || error);
                     // Continue to next bridge
                 }
             }
