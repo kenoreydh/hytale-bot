@@ -79,8 +79,6 @@ export class TwitterMonitor {
                         console.log(`No items found for ${username} on ${bridgeUrl}`);
                     }
 
-                    success = true; // Mark as successful to stop trying other instances
-
                     // RSS feeds usually have the newest item first
                     const items = feed.items as unknown as CustomItem[];
 
@@ -95,6 +93,8 @@ export class TwitterMonitor {
                             continue; // Try next bridge
                         }
                     }
+
+                    success = true; // Mark as successful ONLY after passing validation
 
                     const lastSeenId = this.lastTweets[username];
 
@@ -174,10 +174,10 @@ export class TwitterMonitor {
                     console.error(`Error with bridge ${bridgeUrl}:`, error.message || error);
                     // Continue to next bridge
                 }
+            }
 
-                if (!success) {
-                    console.error(`Failed to fetch tweets for ${username} from ALL bridges.`);
-                }
+            if (!success) {
+                console.error(`Failed to fetch tweets for ${username} from ALL bridges.`);
             }
         }
     }
