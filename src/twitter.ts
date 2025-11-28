@@ -83,6 +83,19 @@ export class TwitterMonitor {
 
                     // RSS feeds usually have the newest item first
                     const items = feed.items as unknown as CustomItem[];
+
+                    // VALIDATION: Check if the feed returned an error disguised as an item
+                    if (items.length > 0) {
+                        const firstItem = items[0];
+                        if (firstItem.title === 'Error' ||
+                            (firstItem.content && firstItem.content.includes('Exception')) ||
+                            (firstItem.content && firstItem.content.includes('404 Not Found')) ||
+                            (firstItem.content && firstItem.content.includes('403 Forbidden'))) {
+                            console.log(`Bridge ${bridgeUrl} returned an error item. Skipping.`);
+                            continue; // Try next bridge
+                        }
+                    }
+
                     const lastSeenId = this.lastTweets[username];
 
                     // Find the index of the last seen tweet
@@ -102,11 +115,20 @@ export class TwitterMonitor {
 
                     for (const newestItem of newItems) {
                         const currentId = newestItem.guid || newestItem.link;
+
+                        // Double check individual item for error
+                        if (newestItem.title === 'Error' || (newestItem.content && newestItem.content.includes('Exception'))) continue;
+
                         console.log(`New tweet from ${username}: ${currentId}`);
 
                         // Force conversion to twitter.com for the embed link
                         let finalUrl = newestItem.link;
                         try {
+                            // Check if it's a valid tweet URL (must contain /status/)
+                            if (!finalUrl.includes('/status/')) {
+                                console.log(`Invalid tweet URL: ${finalUrl}. Skipping.`);
+                                continue;
+                            }
                             finalUrl = finalUrl.replace(/^https?:\/\/[^\/]+/, 'https://twitter.com');
                         } catch (e) {
                             console.error('Error parsing URL', e);
