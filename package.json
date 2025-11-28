@@ -20,7 +20,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "google-translate-api-x": "^10.7.2",
-    "twitter-api-v2": "^1.17.2",
+    "rss-parser": "^3.13.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
