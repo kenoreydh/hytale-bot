@@ -58,7 +58,7 @@ export class TwitterMonitor {
     }
 
     public async checkNewTweets(callback: (tweetText: string, author: string, url: string, imageUrl?: string) => Promise<void>) {
-        console.log('Checking for new tweets (RSS-Bridge)...');
+        console.log(`Checking for new tweets (RSS-Bridge)... Loaded ${config.twitter.rssBridgeUrls.length} bridges.`);
 
         for (const username of config.monitoredAccounts) {
             let success = false;
