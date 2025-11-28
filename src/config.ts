@@ -19,7 +19,20 @@ export const config = {
             'https://rss.nixnet.services',
             'https://rss-bridge.ggc-project.de',
             'https://rssbridge.bus-hit.me',
-            'https://feeds.proxeuse.com'
+            'https://feeds.proxeuse.com',
+            'https://rssbridge.boldair.dev',
+            'https://rss-bridge.bb8.fun',
+            'https://ololbu.ru/rss-bridge',
+            'https://tools.bheil.net/rss-bridge',
+            'https://bridge.suumitsu.eu',
+            'https://feed.eugenemolotov.ru',
+            'https://rss-bridge.mediani.de',
+            'https://rb.ash.fail',
+            'https://rss.noleron.com',
+            'https://rssbridge.projectsegfau.lt',
+            'https://rb.vern.cc',
+            'https://rss.bloat.cat',
+            'https://rssbridge.prenghy.org'
         ],
     },
     // List of Twitter usernames to monitor
